@@ -1,0 +1,17 @@
+<section id="products" class="panel">
+<div class="section-title"><h2>Serviços da conta</h2><span class="small muted">MiniBank</span></div>
+<div class="product-actions"><a class="button secondary" href="{{ url_for('monthly_statement', account_id=account.id) }}">Extratos mensais →</a>
+{% if g.user.role == 'CUSTOMER' and account.status == 'ACTIVE' %}<a class="button secondary" href="{{ url_for('new_loan', account_id=account.id) }}">Pedir empréstimo →</a>{% endif %}</div>
+<div class="product-summary"><div><span class="small">Limite por transferência</span><strong>{{ account.transfer_limit|money }}</strong></div><div><span class="small">Limite diário</span><strong>{{ account.daily_limit|money }}</strong></div><div><span class="small">Comissão mensal</span><strong>{{ 'Isenta' if account.fee_exempt or account.account_type == 'SAVINGS' else '2,00 €' }}</strong></div></div>
+<p class="field-help">Os limites aplicam-se às transferências de saída, por conta e dia do banco. Estornos não repõem o limite consumido. Depósitos, juros e prestações não consomem este limite.</p>
+{% if g.user.role == 'ADMIN' and account.status in ('ACTIVE', 'BLOCKED') %}
+<div class="product-grid"><section><h3>Limites e isenção</h3><form method="post" action="{{ url_for('account_policy', account_id=account.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="transfer-limit">Limite por transferência (€)</label><input id="transfer-limit" name="transfer_limit" inputmode="decimal" value="{{ account.transfer_limit }}" required>
+<label for="daily-limit">Limite diário (€)</label><input id="daily-limit" name="daily_limit" inputmode="decimal" value="{{ account.daily_limit }}" required>
+<label class="check-label"><input type="checkbox" name="fee_exempt" value="yes" {% if account.fee_exempt %}checked{% endif %}> Isentar da comissão mensal</label><button class="button secondary">Guardar política</button></form></section>
+<section><h3>Comissão de manutenção</h3><p>2 € por mês nas contas à ordem. A cobrança é manual e não acumula dívida se faltar saldo. Poupanças e contas com isenção não são cobradas.</p>
+{% if account.status == 'ACTIVE' and not account.fee_exempt and account.account_type == 'CURRENT' %}<form method="post" action="{{ url_for('charge_fee', account_id=account.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary">Cobrar 2 € pelo mês atual</button></form><p class="field-help">Repetir esta ação não cobra novamente o mesmo mês.</p>{% endif %}</section></div>
+{% elif g.user.role == 'CUSTOMER' and account.status == 'ACTIVE' %}
+<details class="account-settings"><summary>Encerrar esta conta</summary><p>O saldo deve ser zero e não podem existir empréstimos pendentes ou ativos. A conta não poderá ser reaberta; o histórico fica disponível e a vaga é libertada.</p><form method="post" action="{{ url_for('close_account', account_id=account.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label class="check-label"><input type="checkbox" name="confirmed" value="yes" required> Confirmo o encerramento definitivo desta conta</label><button class="button secondary">Encerrar conta</button></form></details>
+{% endif %}
+</section>

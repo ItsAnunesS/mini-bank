@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>
-{% block title %}Conta Clara · Mini banco{% endblock %}
+{% block title %}MiniBank{% endblock %}
 </title>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='minibank.svg') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='bank.css') }}">
 {% if g.user and g.user.role == 'CUSTOMER' %}<script src="{{ url_for('static', filename='notifications.js') }}" defer></script>{% endif %}
 </head>
@@ -14,7 +15,7 @@
 {% if g.user %}
 <aside class="sidebar">
 <a class="brand" href="{{ url_for('dashboard') }}">
-<span class="brand-icon">c.</span> conta clara<span class="brand-dot">●</span>
+<img class="brand-logo" src="{{ url_for('static', filename='minibank.svg') }}" alt="" width="40" height="40"> MiniBank
 </a>
 <span class="workspace">{{ 'ADMINISTRAÇÃO' if g.user.role == 'ADMIN' else 'O TEU BANCO' }}</span>
 <nav aria-label="Navegação principal">
@@ -29,6 +30,7 @@
 {% else %}
 <a class="nav-link" {% if request.endpoint in ('new_account', 'request_account') %}aria-current="page"{% endif %} href="{{ url_for('new_account') }}"><span>+</span> Pedir nova conta</a>
 {% endif %}
+<a class="nav-link" {% if request.endpoint in ('loans', 'loan_detail', 'new_loan') %}aria-current="page"{% endif %} href="{{ url_for('loans') }}"><span>↗</span> Empréstimos</a>
 </nav>
 <div class="sidebar-bottom">
 <span class="avatar">{{ g.user.name[:1]|upper }}</span>

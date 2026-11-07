@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Extrato {{ month }} · MiniBank{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('account_detail', account_id=account_id) }}">← Voltar à conta</a>
+<section class="page-heading"><div><span class="eyebrow">EXTRATO MENSAL · {{ account_id|account_number }}</span><h1>{{ month }}</h1><p class="muted">Movimentos simulados · Euro</p></div></section>
+<section class="panel"><form method="get"><label for="month">Mês do extrato</label><input id="month" name="month" type="month" value="{{ month }}" required><button class="button secondary">Consultar mês</button></form>
+<div class="product-actions"><a class="button" href="{{ url_for('monthly_statement', account_id=account_id, month=month, format='csv') }}">Descarregar CSV ↓</a><span class="small muted">Para PDF, usa a opção Imprimir do navegador.</span></div>
+<div class="product-summary">{% for label, value in [('Saldo inicial', summary.opening_balance), ('Entradas', summary.credits), ('Saídas', summary.debits), ('Saldo final', summary.closing_balance)] %}<div><span>{{ label }}</span><strong>{{ value|money }}</strong></div>{% endfor %}</div>
+<p class="field-help">O mês atual inclui os movimentos registados até esta consulta. Limite de 1.000 movimentos por extrato; se excedido, a exportação é recusada sem truncar dados.</p>
+<div class="table-scroll"><table><thead><tr><th>Operação</th><th>Data</th><th>Tipo</th><th class="numeric">Valor</th><th class="numeric">Saldo após</th></tr></thead><tbody>
+{% for entry in entries %}<tr><td>#{{ entry.transaction_id }}</td><td>{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</td><td>{{ {'FEE':'Comissão', 'LOAN':'Empréstimo', 'PAYMENT':'Prestação', 'TRANSFER':'Transferência', 'DEPOSIT':'Depósito', 'INTEREST':'Juros', 'REVERSAL':'Estorno'}.get(entry.kind, entry.kind) }}</td><td class="numeric">{{ entry.direction }} {{ entry.amount|money }}</td><td class="numeric">{{ entry.balance_after|money }}</td></tr>{% else %}<tr><td colspan="5" class="table-empty">Sem movimentos neste mês.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

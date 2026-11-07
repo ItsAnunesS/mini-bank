@@ -1,4 +1,13 @@
 read-request.
+    call static "bank_field" using z"month" request-month
+        by value 7 returning native-status end-call
+    perform check-field
+    call static "bank_field" using z"daily_limit" request-daily-limit
+        by value 50 returning native-status end-call
+    perform check-field
+    call static "bank_field" using z"months" request-months
+        by value 3 returning native-status end-call
+    perform check-field
     call static "bank_field" using z"command" request-command
         by value 32 returning native-status end-call
     perform check-field
@@ -128,7 +137,7 @@ append-rows.
     perform fetch-row
     perform until fetch-status = 2
         add 1 to row-count end-add
-        if row-count > 50
+        if row-count > row-limit
             move "DATABASE_ERROR" to error-code
             perform finish-request
         end-if
@@ -173,6 +182,12 @@ initialize-schema.
     perform execute-query perform fetch-row
     if fetch-status = 2
         move 6 to migration-version perform apply-migration
+    end-if
+    perform reset-query
+    move "SELECT TABNAME FROM SYSCAT.TABLES WHERE TABSCHEMA = CURRENT SCHEMA AND TABNAME = 'BANK_LOANS'" to query-sql
+    perform execute-query perform fetch-row
+    if fetch-status = 2
+        move 7 to migration-version perform apply-migration
     end-if.
 upgrade-daily-schema.
     *> Replace the original unnamed kind constraint in the same DDL transaction.

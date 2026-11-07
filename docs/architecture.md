@@ -148,3 +148,20 @@ A migração 003 substitui a restrição de tipos da transação e cria as novas
 É uma aplicação local de aprendizagem, não um produto bancário pronto para produção. Não implementa compensação, requisitos regulatórios, contabilidade geral de dupla entrada, MFA, recuperação de acesso, recuperação de desastres ou integração de pagamentos. A autorização da aplicação não substitui permissões mínimas na base: por compatibilidade com o ambiente existente, a ligação ainda usa a conta da instância Db2.
 
 A auditoria não pode ser alterada pela interface, mas não é um arquivo inviolável contra um administrador da base. O bloqueio de login é por conta; uma publicação externa exigiria também limitação de pedidos e proteção contra abuso no ponto de entrada.
+
+
+## Produtos MiniBank
+
+`bank/products.cpy` gere extratos mensais, limites, comissões e encerramento; `bank/loans.cpy` gere pedidos, decisões e amortização. `bank/products.py` apenas apresenta formulários, encaminha pedidos e serializa o CSV. O logótipo é um SVG local, sem fontes, scripts ou dependências externas.
+
+Os comandos autenticados novos são `MONTHLY_STATEMENT`, `SET_POLICY`, `CHARGE_FEE`, `CLOSE_ACCOUNT`, `REQUEST_LOAN`, `LOANS`, `LOAN`, `APPROVE_LOAN`, `REJECT_LOAN` e `PAY_LOAN`. Campos adicionais: `month` (AAAA-MM), `daily_limit` (decimal com ponto) e `months` (inteiro). `target` identifica a conta; `original` identifica o empréstimo. Todos os identificadores são verificados em COBOL com autorização por titular ou administrador.
+
+A migração 007 acrescenta políticas à conta e as tabelas `BANK_FEES`, `BANK_LOANS` e `BANK_INSTALLMENTS`. Restrições únicas em conta/mês, titular/chave do pedido e transação da prestação complementam os bloqueios. O encerramento conserva os registos e usa o estado terminal `CLOSED`.
+
+Todos os fluxos monetários bloqueiam primeiro a conta; empréstimos bloqueiam depois o pedido. Decisões, lançamentos, saldos e auditoria partilham commit/rollback. A cobrança mensal e a aprovação são idempotentes; pagamentos usam uma chave por intenção. Uma resposta perdida não causa repetição automática. Comissões e pagamentos são movimentos de uma só conta com direção negativa; créditos de empréstimos têm direção positiva. A reconciliação reconhece as três formas e o estorno genérico recusa-as para não desalinhar o estado do produto.
+
+Extratos mensais bloqueiam a conta enquanto leem totais e movimentos, garantindo a mesma fotografia. O intervalo é fechado no início do mês e aberto no início do mês seguinte; saldo inicial resulta dos lançamentos anteriores. São devolvidos até 1.000 movimentos, com erro explícito se excedido, mantendo o limite de resposta do transporte. Não há cache de saldos, limites ou decisões.
+
+Os limites aplicam-se exclusivamente a transferências de saída e usam a data do Db2. O agregado diário é lido com o bloqueio da conta de origem já adquirido. Alterações de política usam o mesmo bloqueio. Os planos de empréstimo usam campos decimais COBOL; capital regular truncado a cêntimos, remanescente na última prestação e juros arredondados a cêntimos a cada mês. Pagamentos antecipados mantêm os montantes contratados nesta simulação.
+
+Os índices únicos dos identificadores de desembolso e pagamento usam `EXCLUDE NULL KEYS`, permitindo pedidos e prestações ainda não processados, conforme a [documentação IBM de CREATE INDEX](https://www.ibm.com/docs/en/db2/11.5.x?topic=statements-create-index).

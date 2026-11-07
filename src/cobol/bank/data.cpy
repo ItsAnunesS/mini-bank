@@ -98,3 +98,21 @@
 01 existing-account-count       usage binary-long.
 01 approval-state               pic x(10).
 01 approved-by                  pic x(19).
+
+01 request-month                pic x(7).
+01 request-daily-limit          pic x(50).
+01 request-months               pic x(3).
+01 month-start                  pic x(10).
+01 transfer-limit               pic 9(7)v99.
+01 daily-limit                  pic 9(7)v99.
+01 daily-used                   pic 9(15)v99.
+01 fee-exempt                   usage binary-long.
+01 loan-id                      pic x(19).
+01 loan-state                   pic x(10).
+01 loan-principal               pic 9(7)v99.
+01 loan-months                  usage binary-long.
+01 installment-number           usage binary-long.
+01 installment-capital          pic 9(7)v99.
+01 installment-interest         pic 9(7)v99.
+01 loan-remaining               pic 9(7)v99.
+01 row-limit                    usage binary-long value 50.

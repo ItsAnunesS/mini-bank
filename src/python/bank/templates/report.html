@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Relatório #{{ report.id }} · Conta Clara{% endblock %}
+{% block title %}Relatório #{{ report.id }} · MiniBank{% endblock %}
 {% block content %}
 <a class="back" href="{{ url_for('reports') }}">← Todos os relatórios</a>
 <section class="page-heading"><div><span class="eyebrow">{{ 'FECHO DIÁRIO' if report.mode == 'CLOSE' else 'RECONCILIAÇÃO' }}</span><h1>Relatório #{{ report.id }}</h1><p class="muted">{{ report.created_at.strftime('%d/%m/%Y · %H:%M:%S') }} · {{ report.actor_name }} · Data de referência: {{ report.report_date }}</p></div><span class="status {{ 'blocked' if report.status != 'OK' }}">{{ 'Concluído' if report.status == 'OK' else 'Divergências' }}</span></section>

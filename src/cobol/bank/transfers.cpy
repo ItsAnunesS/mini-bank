@@ -41,6 +41,7 @@ move-money.
         perform finish-request
     end-if
     if source-id not = spaces
+        perform enforce-transfer-limits
         if source-balance < movement-amount
             move "INSUFFICIENT_FUNDS" to error-code
             perform finish-request

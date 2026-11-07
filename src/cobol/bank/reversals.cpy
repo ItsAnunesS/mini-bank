@@ -21,7 +21,8 @@ reverse-movement.
     perform require-admin
     perform validate-reason
     perform load-original
-    if original-kind = "REVERSAL"
+    if original-kind not = "DEPOSIT" and not = "INTEREST"
+        and not = "TRANSFER"
         move "REVERSAL_NOT_ALLOWED" to error-code perform finish-request
     end-if
     move original-target to target-id

@@ -10,6 +10,7 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 from werkzeug.exceptions import HTTPException
 from bank import client
 from bank.client import BankError
+from bank.products import register_product_routes
 
 
 def create_app():
@@ -54,7 +55,7 @@ def create_app():
     @app.template_filter('account_status')
     def format_account_status(value):
         return {'ACTIVE': 'Ativa', 'BLOCKED': 'Bloqueada', 'PENDING': 'Pendente',
-                'REJECTED': 'Rejeitado', 'CANCELLED': 'Cancelado'}.get(value, value)
+                'REJECTED': 'Rejeitado', 'CANCELLED': 'Cancelado', 'CLOSED': 'Encerrada', 'PAID': 'Liquidado'}.get(value, value)
 
     @app.template_filter('money')
     def format_money(value):
@@ -312,6 +313,7 @@ def create_app():
         return render_template('error.html', title='Serviço temporariamente indisponível',
                                message=f'Tenta novamente mais tarde. Referência: {reference}'), 503
 
+    register_product_routes(app, protected, page_cursor)
     return app
 
 

@@ -6,13 +6,25 @@ from decimal import Decimal
 
 
 MESSAGES = {
+    'INVALID_MONTH': 'Escolhe um mês válido, até ao mês atual.',
+    'STATEMENT_LIMIT': 'Este mês excede o limite de 1.000 movimentos por extrato desta versão.',
+    'INVALID_LIMIT': 'O limite diário deve ser igual ou superior ao limite por transferência.',
+    'TRANSFER_LIMIT': 'O valor ultrapassa o limite por transferência desta conta.',
+    'DAILY_LIMIT': 'O limite diário de transferências desta conta foi atingido.',
+    'FEE_EXEMPT': 'Esta conta está isenta da comissão mensal.',
+    'CLOSURE_BALANCE': 'Transfere todo o saldo antes de encerrar a conta.',
+    'CLOSURE_LOAN': 'A conta tem um empréstimo pendente ou ativo. Resolve-o antes de encerrar.',
+    'INVALID_LOAN': 'Escolhe entre 100 e 100.000 euros e um prazo de 3 a 60 meses.',
+    'LOAN_UNAVAILABLE': 'Empréstimo indisponível.',
+    'LOAN_NOT_PENDING': 'Este empréstimo já tem uma decisão.',
+    'LOAN_NOT_ACTIVE': 'Este empréstimo não tem prestações por pagar ou não está ativo.',
     'ACCOUNT_LIMIT': 'Atingiste o limite: até 3 contas à ordem e 2 poupanças, incluindo contas pendentes e bloqueadas.',
     'NOTIFICATION_UNAVAILABLE': 'Notificação indisponível.',
     'NOT_PENDING': 'Esta conta não tem um pedido pendente de aprovação.',
     'INVALID_ACCOUNT_TYPE': 'Escolhe conta à ordem ou poupança.',
     'INVALID_REASON': 'Indica um motivo com pelo menos 5 caracteres e até 240 bytes.',
     'TRANSACTION_NOT_FOUND': 'Operação não encontrada.',
-    'REVERSAL_NOT_ALLOWED': 'Não é permitido estornar um estorno.',
+    'REVERSAL_NOT_ALLOWED': 'Só depósitos, transferências e juros podem ser estornados.',
     'ALREADY_REVERSED': 'Esta operação já foi estornada.',
     'REPORT_NOT_FOUND': 'Relatório não encontrado.',
     'REPORT_LIMIT': 'O processamento excedeu o limite desta versão (500 contas ou capacidade decimal).',
@@ -54,9 +66,11 @@ def decode_row(row):
         if value is None:
             continue
         if key in ('amount', 'balance', 'balance_after', 'balance_before', 'ledger_balance',
-                   'last_balance', 'difference', 'interest_amount', 'total_interest'):
+                   'last_balance', 'difference', 'interest_amount', 'total_interest',
+                   'transfer_limit', 'daily_limit', 'principal', 'capital', 'interest', 'remaining',
+                   'outstanding', 'annual_rate', 'total_repayment', 'opening_balance', 'closing_balance', 'credits', 'debits'):
             row[key] = Decimal(value)
-        elif key in ('created_at', 'expires_at', 'locked_until', 'read_at'):
+        elif key in ('created_at', 'expires_at', 'locked_until', 'read_at', 'closed_at', 'approved_at', 'paid_at'):
             row[key] = datetime.fromisoformat(value)
     return row
 
@@ -73,7 +87,7 @@ def call_backend(command, **fields):
             raise BackendError('Não foi possível concluir a operação na base de dados.')
         raise BankError(code)
     response['rows'] = [decode_row(row) for row in response.get('rows', [])]
-    for key in ('account', 'report', 'transaction'):
+    for key in ('account', 'report', 'transaction', 'summary', 'loan'):
         if key in response:
             response[key] = decode_row(response[key])
     return response

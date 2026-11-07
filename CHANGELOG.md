@@ -6,6 +6,14 @@ Alterações relevantes do projeto, com datas no formato AAAA-MM-DD.
 
 ### Adicionado
 
+- Extratos mensais por conta, com saldos de abertura/fecho, totais e exportação CSV completa até 1.000 movimentos.
+- Limites de transferência por operação/dia configuráveis pelo administrador, com validação concorrente em COBOL.
+- Comissão mensal simulada de 2 €, cobrança idempotente e isenções por conta e para poupanças.
+- Empréstimos simulados com pedidos, aprovação/rejeição, plano de capital constante a 6% ao ano e pagamento manual de prestações.
+- Encerramento definitivo de contas elegíveis, preservando histórico e libertando vagas.
+- Identidade MiniBank com logótipo vetorial e favicon; navegação para serviços da conta e empréstimos.
+- Migração 007 e integração dos novos movimentos na reconciliação.
+
 - Sino com total de notificações não lidas, atualização automática sem recarregar e leitura de todas as notificações do titular; polling apenas com a aba visível, proteção CSRF e alternativa sem JavaScript.
 
 - Notificações persistentes de aprovação/rejeição no painel do cliente, com motivo, paginação e opção de marcar como lida; autorização por titular, proteção CSRF e gravação atómica com a decisão em COBOL/Db2.
@@ -57,6 +65,9 @@ Alterações relevantes do projeto, com datas no formato AAAA-MM-DD.
 - Credenciais fora do Git e permissões limitadas para a aplicação.
 
 ### Verificação
+
+- Migração 007 aplicada com comparação dos valores de todas as colunas preexistentes: utilizadores, contas, saldos, movimentos, sessões e relatórios preservados.
+- 70 testes da aplicação aprovados em Docker/Db2 isolado, incluindo 14 testes de produtos: limites concorrentes, duplicação de cobranças/aprovações/pagamentos, arredondamento, rollback, CSV, CSRF, autorização e encerramento. Extratos, empréstimos, identidade e administração verificados no navegador.
 
 - 56 testes da aplicação aprovados em Docker, incluindo reutilização de processos, isolamento de sessões/threads, fork, timeout, rollback e recuperação após falha. Dados de teste em esquemas isolados.
 - Comparação local com Flask test client e Db2 aquecido, mediana de cinco pedidos: painel 154 → 2,59 ms; detalhe da conta 116,86 → 1,30 ms; notificações 112,96 → 1,18 ms. Mede processamento no servidor, sem rede/renderização; o primeiro pedido ainda estabelece a ligação.

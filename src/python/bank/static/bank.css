@@ -873,3 +873,14 @@ select:focus,textarea:focus { outline:2px solid #b8d1bd; }
 .notification-count { border-radius: 20px; background: #195443; color: white; padding: 2px 7px; font-size: 12px; }
 #notification-update-status:empty { display: none; }
 @media (max-width: 600px) { .notification-bell .small { display: none; } }
+
+/* MiniBank product navigation and printable statements. */
+.brand-logo { flex-shrink: 0; }
+.product-actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+.product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 24px 0; }
+.product-grid .panel { min-width: 0; }
+.product-summary { display: flex; gap: 24px; flex-wrap: wrap; margin: 24px 0; }
+.product-summary div { flex: 1; min-width: 130px; }
+.product-summary strong { display: block; font-size: 1.5rem; margin-top: 8px; }
+@media (max-width: 800px) { .product-grid { grid-template-columns: 1fr; } }
+@media print { .sidebar, .topbar, .product-actions, .section-nav, form, .back { display: none !important; } .main { margin: 0; padding: 0; } .table-scroll { overflow: visible; } .panel { border: 0; } }

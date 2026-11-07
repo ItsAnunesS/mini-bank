@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ account.id|account_number }} · Conta Clara{% endblock %}
+{% block title %}{{ account.id|account_number }} · MiniBank{% endblock %}
 {% block content %}
 <a class="back" href="{{ url_for('dashboard') }}">← Todas as contas</a>
 <section class="page-heading">
@@ -8,7 +8,7 @@
 <h1>{{ account.id|account_number }}</h1>
 <p class="muted">{{ account.owner_name }}</p>
 </div>
-<span class="status {{ 'blocked' if account.status in ('BLOCKED', 'REJECTED', 'CANCELLED') else 'pending' if account.status == 'PENDING' }}">{{ account.status|account_status }}</span>
+<span class="status {{ 'blocked' if account.status in ('BLOCKED', 'REJECTED', 'CANCELLED', 'CLOSED') else 'pending' if account.status == 'PENDING' }}">{{ account.status|account_status }}</span>
 </section>
 <nav class="section-nav" aria-label="Nesta conta"><a href="#account-overview">Visão geral</a><a href="#account-operation">{{ 'Pedido' if account.status in ('PENDING', 'REJECTED', 'CANCELLED') else 'Depositar' if g.user.role == 'ADMIN' else 'Transferir' }}</a><a href="#statement">Extrato</a></nav>
 <div class="detail-grid" id="account-overview">
@@ -46,6 +46,8 @@
 <p class="muted">Este pedido foi {{ 'rejeitado' if account.status == 'REJECTED' else 'cancelado' }} e não ocupa uma vaga no limite de contas.</p>
 {% if account.rejection_reason %}<p class="rejection-reason"><strong>Motivo da rejeição:</strong> {{ account.rejection_reason }}</p>{% endif %}
 {% if g.user.role == 'CUSTOMER' %}<a class="button secondary" href="{{ url_for('new_account') }}">Pedir nova conta →</a>{% endif %}
+{% elif account.status == 'CLOSED' %}
+<p class="muted">Conta encerrada. O histórico e os extratos mensais continuam disponíveis.</p>
 {% elif account.status == 'BLOCKED' %}
 <p class="muted">Esta conta está bloqueada. O extrato continua disponível, mas não é possível movimentar dinheiro.</p>
 {% else %}
@@ -66,6 +68,7 @@
 {% endif %}
 </section>
 </div>
+{% include 'account_products.html' %}
 <section class="panel statement" id="statement">
 <div class="section-title">
 <h2>Extrato da conta</h2>
@@ -86,7 +89,7 @@
 {% for entry in entries %}
 <tr>
 <td>
-<span class="movement-icon">{{ '↙' if entry.direction == '+' else '↗' }}</span>{{ 'Juros de poupança' if entry.kind == 'INTEREST' else 'Estorno' if entry.kind == 'REVERSAL' else 'Depósito simulado' if entry.kind == 'DEPOSIT' else 'Transferência recebida' if entry.direction == '+' else 'Transferência enviada' }}<small class="row-meta">{% if g.user.role == 'ADMIN' %}<a href="{{ url_for('transaction_detail', transaction_id=entry.transaction_id) }}">Operação #{{ entry.transaction_id }} · Ver detalhes →</a>{% else %}Operação #{{ entry.transaction_id }}{% endif %}
+<span class="movement-icon">{{ '↙' if entry.direction == '+' else '↗' }}</span>{{ 'Comissão mensal' if entry.kind == 'FEE' else 'Crédito de empréstimo' if entry.kind == 'LOAN' else 'Prestação de empréstimo' if entry.kind == 'PAYMENT' else 'Juros de poupança' if entry.kind == 'INTEREST' else 'Estorno' if entry.kind == 'REVERSAL' else 'Depósito simulado' if entry.kind == 'DEPOSIT' else 'Transferência recebida' if entry.direction == '+' else 'Transferência enviada' }}<small class="row-meta">{% if g.user.role == 'ADMIN' %}<a href="{{ url_for('transaction_detail', transaction_id=entry.transaction_id) }}">Operação #{{ entry.transaction_id }} · Ver detalhes →</a>{% else %}Operação #{{ entry.transaction_id }}{% endif %}
 {% if entry.reversed_by %} · Estornada por #{{ entry.reversed_by }}{% endif %}{% if entry.original_id %} · Original #{{ entry.original_id }}{% endif %}</small>
 </td>
 <td>{{ entry.created_at.strftime('%d/%m/%Y · %H:%M') }}</td>

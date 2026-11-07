@@ -1,4 +1,4 @@
-# Conta Clara — mini banco com COBOL e Db2
+# MiniBank — mini banco com COBOL e Db2
 
 Sistema bancário **de demonstração**, com interface web local. Administradores criam acessos e aprovam pedidos de contas; clientes pedem e consultam as próprias contas e transferem valores simulados. O gestor de despesas original continua disponível, sem alteração dos seus dados.
 
@@ -35,6 +35,28 @@ O administrador pode **rejeitar um pedido pendente**, indicando um motivo com pe
 O painel do cliente inclui **Notificações** de novas aprovações e rejeições, com ligação à conta e motivo da rejeição. **Marcar como lida** guarda a data de leitura sem apagar o aviso. O sino mostra o total de não lidas, incluindo outras páginas. A lista tem páginas de 50 notificações. O contador e a lista atualizam automaticamente a cada 15 segundos com a aba visível e ao regressar à aba, com novas tentativas mais espaçadas em caso de falha. **Marcar todas como lidas** abrange todas as notificações não lidas do titular no momento da operação, sem apagar o histórico nem alterar datas já registadas. Novos avisos após essa operação continuam por ler. Os formulários também funcionam sem JavaScript. A migração não gera avisos retroativos para decisões anteriores.
 
 A palavra-passe inicial do cliente deve ser entregue por um canal privado. Esta versão ainda não inclui recuperação ou alteração de palavra-passe pela interface, criação de administradores adicionais, levantamentos, cartões ou integração com bancos reais.
+
+### Extratos, limites e comissões
+
+No detalhe de cada conta, **Serviços da conta → Extratos mensais** permite escolher um mês e consultar saldo inicial, entradas, saídas e saldo final. O CSV inclui todos os movimentos do mês, em ordem de registo. A impressão do navegador permite guardar PDF. O mês atual é provisório; consultas futuras são recusadas. Nesta versão, um extrato com mais de 1.000 movimentos é recusado integralmente, sem exportação parcial.
+
+As transferências têm limites por conta de **1.000 € por operação e 5.000 € por dia**, alteráveis pelo administrador em **Limites e isenção**. O limite diário deve ser igual ou superior ao individual. O dia segue a data do Db2; transferências estornadas continuam a consumir o limite, enquanto depósitos, juros, comissões e prestações não o consomem. Operações concorrentes validam o mesmo saldo e limite sob bloqueio.
+
+A comissão mensal simulada é **2 € por conta à ordem**. O administrador cobra explicitamente o mês atual no detalhe da conta: não há cobrança automática nem retroativa. A mesma conta/mês só pode ser cobrada uma vez. Poupanças e contas com isenção individual não pagam comissão. Contas não ativas e contas sem saldo suficiente não são cobradas; não há acumulação de dívida. Alterar a isenção não devolve comissões anteriores.
+
+### Empréstimos simulados
+
+O cliente abre uma conta ativa e escolhe **Pedir empréstimo**: capital de **100 a 100.000 €**, prazo de **3 a 60 meses** e taxa fixa de **6% ao ano**. COBOL gera o plano com capital constante, juros mensais de 0,5% sobre o capital em dívida e arredondamento dos juros ao cêntimo. A última prestação absorve os cêntimos remanescentes do capital.
+
+Em **Empréstimos**, o administrador consulta o plano e aprova ou rejeita com motivo. A aprovação credita o capital uma única vez e fixa as datas: cada vencimento é calculado a partir da data de aprovação, com ajuste de fim do mês. As datas anteriores à aprovação são indicativas. O titular vê a decisão e o motivo no detalhe do pedido.
+
+O pagamento é manual, por ordem das prestações, com débito na conta associada. Pode ser antecipado, mas **não recalcula os juros nem o calendário** desta simulação. Não existem multas de atraso, seguros, amortizações extraordinárias ou cobranças automáticas. Saldo insuficiente e conta bloqueada impedem o pagamento sem alterar o plano. Repetir o mesmo pedido de pagamento não debita outra prestação.
+
+### Encerrar uma conta
+
+O titular pode encerrar uma conta ativa com **saldo zero e sem empréstimos pendentes ou ativos**, através de confirmação explícita em Serviços da conta. A conta fica definitivamente encerrada, liberta a vaga no limite de contas e conserva todos os movimentos, pedidos e extratos. Não pode ser reativada nem receber dinheiro. Contas bloqueadas precisam primeiro de intervenção administrativa.
+
+A migração `007_banking_products.sql` adiciona os produtos e limites sem apagar utilizadores, contas ou movimentos. As contas existentes recebem os limites predefinidos; nenhuma comissão ou operação de crédito é lançada pela migração. Comissões, créditos de empréstimos e pagamentos integram o extrato e a reconciliação, mas não admitem estorno genérico nesta versão.
 
 ### Configuração
 

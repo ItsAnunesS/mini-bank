@@ -29,7 +29,7 @@
 <a class="account-card" href="{{ url_for('account_detail', account_id=account.id) }}">
 <div class="card-top">
 <span class="account-label">{{ 'POUPANÇA · 3,65% / ANO' if account.account_type == 'SAVINGS' else 'CONTA À ORDEM' }}</span>
-<span class="status {{ 'blocked' if account.status in ('BLOCKED', 'REJECTED', 'CANCELLED') else 'pending' if account.status == 'PENDING' }}">{{ account.status|account_status }}</span>
+<span class="status {{ 'blocked' if account.status in ('BLOCKED', 'REJECTED', 'CANCELLED', 'CLOSED') else 'pending' if account.status == 'PENDING' }}">{{ account.status|account_status }}</span>
 </div>
 {% if account.rejection_reason %}<p class="rejection-reason"><strong>Motivo da rejeição:</strong> {{ account.rejection_reason }}</p>{% endif %}
 <span class="account-code">{{ account.id|account_number }}</span>

@@ -31,6 +31,16 @@ run-request.
                 when "PENDING_ACCOUNTS"
                     perform require-admin perform list-accounts
                 when "SET_STATUS" perform change-account-status
+                when "MONTHLY_STATEMENT" perform monthly-statement
+                when "SET_POLICY" perform set-account-policy
+                when "CHARGE_FEE" perform charge-monthly-fee
+                when "CLOSE_ACCOUNT" perform close-account
+                when "REQUEST_LOAN" perform request-loan
+                when "LOANS" perform list-loans
+                when "LOAN" perform read-loan
+                when "APPROVE_LOAN" perform approve-loan
+                when "REJECT_LOAN" perform reject-loan
+                when "PAY_LOAN" perform pay-loan
                 when "ACCOUNTS" perform list-accounts
                 when "NOTIFICATIONS" perform list-notifications
                 when "READ_NOTIFICATION" perform mark-notification-read
@@ -57,6 +67,8 @@ copy "bank/database.cpy".
 copy "bank/authentication.cpy".
 copy "bank/customers.cpy".
 copy "bank/accounts.cpy".
+copy "bank/products.cpy".
+copy "bank/loans.cpy".
 copy "bank/notifications.cpy".
 copy "bank/transfers.cpy".
 copy "bank/reversals.cpy".

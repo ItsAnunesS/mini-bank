@@ -28,6 +28,7 @@ list-statement.
     move request-target to numeric-value perform validate-id
     perform reset-query
     string "SELECT A.ID, A.USER_ID, A.STATUS, A.BALANCE, A.CREATED_AT, "
+        "A.TRANSFER_LIMIT, A.DAILY_LIMIT, A.FEE_EXEMPT, A.CLOSED_AT, "
         "U.NAME AS OWNER_NAME, U.EMAIL, R.REASON AS REJECTION_REASON, "
         "CASE WHEN S.ACCOUNT_ID IS NULL THEN 'CURRENT' ELSE 'SAVINGS' END AS ACCOUNT_TYPE "
         "FROM BANK_ACCOUNTS A "

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Criar acesso · Conta Clara{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('dashboard') }}">← Voltar às contas</a>
+<section class="page-heading"><div><span class="eyebrow">GESTÃO DE CLIENTES</span>
+<h1>Uma nova relação começa aqui.</h1>
+<p class="muted">Cria um acesso pessoal. Depois de entrar, o utilizador escolhe e pede as suas contas bancárias.</p></div></section>
+<ol class="workflow"><li><b>01</b><span>Criar acesso</span></li><li><b>02</b><span>Utilizador pede uma conta</span></li><li><b>03</b><span>Administrador aprova</span></li></ol>
+{% if error %}<div class="notice error" role="alert">{{ error }} Os dados foram mantidos; volta a introduzir a palavra-passe se necessário.</div>{% endif %}
+<div class="admin-grid">
+<section class="panel">
+<div class="section-title">
+<h2>Novo cliente</h2>
+<span class="pill">Acesso ao sistema</span>
+</div>
+<p class="muted small">O acesso não tem saldo e não cria contas bancárias automaticamente.</p>
+<form method="post" action="{{ url_for('create_customer') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label for="name">Nome completo</label>
+<input id="name" name="name" value="{{ values.get('name', '') }}" maxlength="120" autocomplete="name" required>
+<label for="email">Email</label>
+<input id="email" type="email" name="email" value="{{ values.get('email', '') if mode == 'customer' else '' }}" maxlength="254" autocomplete="off" required>
+<label for="password">Palavra-passe inicial</label>
+<input id="password" type="password" name="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+<small class="field-help">Entre 12 e 128 caracteres. Partilha por um canal privado.</small>
+<button class="button">Criar acesso <span>→</span>
+</button>
+</form>
+</section>
+<section class="panel quiet-panel"><span class="circle-icon">✓</span><h2>Um acesso.<br>Até cinco contas.</h2>
+<p class="muted">Cada utilizador pode pedir até 3 contas à ordem e 2 poupanças. Os pedidos pendentes e as contas bloqueadas contam para estes limites.</p>
+<p class="muted">O utilizador acompanha os pedidos no seu painel. Só após aprovação as contas ficam disponíveis para movimentos.</p>
+<a class="button secondary" href="{{ url_for('approvals') }}">Ver pedidos pendentes →</a></section>
+</div>
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Fecho e reconciliação · Conta Clara{% endblock %}
+{% block content %}
+<section class="page-heading"><div><span class="eyebrow">CONTROLO DIÁRIO</span><h1>Fecho e reconciliação</h1><p class="muted">Confere os movimentos, guarda uma fotografia das contas e acompanha os resultados.</p></div></section>
+<div class="admin-grid">
+<section class="panel"><h2>Reconciliar agora</h2><p class="muted">Compara saldos, lançamentos e operações. Guarda um novo relatório sem alterar o dinheiro nas contas.</p><form method="post" action="{{ url_for('reconcile') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary">Executar reconciliação →</button></form></section>
+<section class="panel quiet-panel"><h2>Fechar o dia</h2><p class="muted">Reconcilia e credita os juros simulados da poupança se todas as contas estiverem corretas. Um fecho concluído por data do Db2.</p><form method="post" action="{{ url_for('close_day') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button">Executar fecho de hoje →</button></form></section>
+</div>
+<p class="notice">O fecho é uma fotografia no momento da execução, não encerra as operações do dia. Repetir um fecho concluído abre o mesmo relatório, sem novos juros. Usa “Reconciliar agora” para verificar movimentos posteriores. Divergências não são corrigidas automaticamente.</p>
+<section class="panel statement"><h2>Relatórios guardados</h2><div class="table-scroll"><table><thead><tr><th>Relatório</th><th>Execução</th><th>Resultado</th><th>Contas</th><th>Divergências</th><th class="numeric">Juros</th></tr></thead><tbody>
+{% for report in reports %}<tr><td><a class="inline-link" href="{{ url_for('report_detail', report_id=report.id) }}">#{{ report.id }} · {{ 'Fecho diário' if report.mode == 'CLOSE' else 'Reconciliação' }} →</a></td><td>{{ report.created_at.strftime('%d/%m/%Y · %H:%M') }}</td><td><span class="status {{ 'blocked' if report.status != 'OK' }}">{{ 'Concluído' if report.status == 'OK' else 'Divergências' }}</span></td><td>{{ report.account_count }}</td><td>{{ report.mismatch_count }}</td><td class="numeric">{{ report.total_interest|money }}</td></tr>
+{% else %}<tr><td colspan="6" class="table-empty">Ainda não existem relatórios. Executa uma reconciliação para começar.</td></tr>{% endfor %}
+</tbody></table></div>{% if reports|length == 50 %}<a class="text-link" href="{{ url_for('reports', before=reports[-1].id) }}">Relatórios anteriores →</a>{% endif %}</section>
+{% endblock %}

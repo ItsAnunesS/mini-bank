@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="login-layout">
+<section class="login-story">
+<a class="brand" href="{{ url_for('login') }}">
+<span class="brand-icon">c.</span> conta clara<span class="brand-dot">●</span>
+</a>
+<div>
+<span class="eyebrow">MENOS RUÍDO. MAIS CLAREZA.</span>
+<h1>O teu dinheiro.<br>Uma visão<br>
+<em>mais simples.</em>
+</h1>
+<p>Contas, movimentos e transferências.<br>Tudo no seu lugar.</p>
+</div>
+<div class="story-bottom">
+<span>01 / SIMPLES POR NATUREZA</span>
+<span>↗</span>
+</div>
+</section>
+<section class="login-panel">
+<div class="login-form">
+<span class="eyebrow">BEM-VINDO DE VOLTA</span>
+<h2>Entra na tua conta</h2>
+<p class="muted">Um espaço para acompanhar cada movimento.</p>
+{% if error %}
+<div class="notice error" role="alert">{{ error }}</div>
+{% endif %}
+<form method="post" action="{{ url_for('login') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label for="email">Email</label>
+<input id="email" name="email" value="{{ email|default('') }}" type="email" autocomplete="username" maxlength="254" placeholder="nome@exemplo.pt" required>
+<label for="password">Palavra-passe</label>
+<input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" placeholder="A tua palavra-passe" required>
+<button class="button full">Entrar <span>→</span>
+</button>
+</form>
+<div class="login-note">
+<span>◈</span>
+<p>O acesso é criado pelo administrador.<br>Não tens conta? Contacta-o para começar.</p>
+</div>
+<footer>MINI BANCO · APENAS VALORES SIMULADOS</footer>
+</div>
+</section>
+</div>
+{% endblock %}

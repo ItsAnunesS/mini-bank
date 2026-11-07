@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Pedir nova conta · Conta Clara{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('dashboard') }}">← As minhas contas</a>
+<section class="page-heading"><div><span class="eyebrow">O TEU ACESSO, AS TUAS ESCOLHAS</span><h1>Pedir nova conta</h1><p class="muted">Escolhe o tipo de conta. O pedido será enviado para aprovação.</p></div></section>
+{% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+<div class="detail-grid"><section class="panel">
+<form method="post" action="{{ url_for('request_account') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="request_key" value="{{ new_request_key() }}">
+<label for="account-type">Tipo de conta</label>
+<select id="account-type" name="account_type"><option value="CURRENT">À ordem · até 3 contas</option><option value="SAVINGS">Poupança · até 2 contas</option></select>
+<p class="field-help">Contas ativas, bloqueadas e pedidos pendentes contam para os limites.</p>
+<button class="button">Enviar pedido →</button>
+</form></section><section class="panel quiet-panel"><h2>O que acontece a seguir?</h2><ol><li>A conta fica pendente, com saldo zero.</li><li>Um administrador aprova a abertura.</li><li>A conta fica ativa e disponível para movimentos.</li></ol><p class="muted">Poupança: taxa simulada de 3,65% ao ano, com juros no fecho diário apenas depois da aprovação.</p></section></div>
+{% endblock %}

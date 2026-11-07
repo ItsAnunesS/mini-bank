@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}{{ account.id|account_number }} · Conta Clara{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('dashboard') }}">← Todas as contas</a>
+<section class="page-heading">
+<div>
+<span class="eyebrow">{{ 'POUPANÇA · 3,65% / ANO' if account.account_type == 'SAVINGS' else 'CONTA À ORDEM' }}</span>
+<h1>{{ account.id|account_number }}</h1>
+<p class="muted">{{ account.owner_name }}</p>
+</div>
+<span class="status {{ 'blocked' if account.status in ('BLOCKED', 'REJECTED', 'CANCELLED') else 'pending' if account.status == 'PENDING' }}">{{ account.status|account_status }}</span>
+</section>
+<nav class="section-nav" aria-label="Nesta conta"><a href="#account-overview">Visão geral</a><a href="#account-operation">{{ 'Pedido' if account.status in ('PENDING', 'REJECTED', 'CANCELLED') else 'Depositar' if g.user.role == 'ADMIN' else 'Transferir' }}</a><a href="#statement">Extrato</a></nav>
+<div class="detail-grid" id="account-overview">
+<section class="balance-panel">
+<span class="eyebrow">SALDO CONTABILÍSTICO</span>
+<strong>{{ account.balance|money }}</strong>
+<span class="muted">Euro · valores simulados</span>
+{% if account.account_type == 'SAVINGS' %}<p class="small savings-note">3,65% ao ano · 0,01% por dia. Juros arredondados ao cêntimo e creditados no fecho, apenas em contas ativas. Sem recuperação automática de dias não processados.</p>{% endif %}
+{% if g.user.role == 'ADMIN' and account.status in ('ACTIVE', 'BLOCKED') %}
+<details class="account-settings"><summary>Gerir estado da conta</summary><p class="small">Bloquear impede entradas e saídas de dinheiro. O titular mantém acesso ao extrato.</p>
+<form action="{{ url_for('update_status', account_id=account.id) }}" method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="status" value="{{ 'ACTIVE' if account.status == 'BLOCKED' else 'BLOCKED' }}">
+<button class="button secondary">{{ 'Ativar conta' if account.status == 'BLOCKED' else 'Bloquear conta' }}</button>
+</form>
+</details>
+{% endif %}
+</section>
+<section class="panel" id="account-operation">
+<h2>{{ 'Pedido de abertura' if account.status in ('PENDING', 'REJECTED', 'CANCELLED') else 'Depósito simulado' if g.user.role == 'ADMIN' else 'Fazer transferência' }}</h2>
+{% if account.status == 'PENDING' %}
+<p class="muted">Pedido pendente. Esta conta ainda não pode receber depósitos, transferir dinheiro ou receber juros.</p>
+{% if g.user.role == 'ADMIN' %}
+<form method="post" action="{{ url_for('approve_account', account_id=account.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button">Aprovar abertura da conta →</button></form>
+<hr>
+<form method="post" action="{{ url_for('reject_account', account_id=account.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label for="rejection-reason">Motivo da rejeição</label>
+<textarea id="rejection-reason" name="reason" minlength="5" maxlength="240" required aria-describedby="reason-help">{{ request.form.get('reason', '') }}</textarea>
+<p class="field-help" id="reason-help">O titular verá este motivo. Mínimo de 5 caracteres e máximo de 240 bytes (acentos ocupam mais de um byte).</p>
+<button class="button secondary">Rejeitar pedido</button></form>
+{% else %}<p class="field-help">Podes acompanhar o estado no painel ou cancelar enquanto estiver pendente.</p>
+<form method="post" action="{{ url_for('cancel_account', account_id=account.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary">Cancelar pedido</button></form>{% endif %}
+{% elif account.status in ('REJECTED', 'CANCELLED') %}
+<p class="muted">Este pedido foi {{ 'rejeitado' if account.status == 'REJECTED' else 'cancelado' }} e não ocupa uma vaga no limite de contas.</p>
+{% if account.rejection_reason %}<p class="rejection-reason"><strong>Motivo da rejeição:</strong> {{ account.rejection_reason }}</p>{% endif %}
+{% if g.user.role == 'CUSTOMER' %}<a class="button secondary" href="{{ url_for('new_account') }}">Pedir nova conta →</a>{% endif %}
+{% elif account.status == 'BLOCKED' %}
+<p class="muted">Esta conta está bloqueada. O extrato continua disponível, mas não é possível movimentar dinheiro.</p>
+{% else %}
+<form method="post" action="{{ url_for('deposit', account_id=account.id) if g.user.role == 'ADMIN' else url_for('transfer', account_id=account.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="request_key" value="{{ new_request_key() }}">
+{% if g.user.role == 'CUSTOMER' %}
+<label for="target">Conta de destino</label>
+<input id="target" name="target" placeholder="MB-00000002" maxlength="22" required>
+{% endif %}
+<p class="operation-context small">Conta de {{ 'destino' if g.user.role == 'ADMIN' else 'origem' }}: <strong>{{ account.id|account_number }}</strong></p>
+<label for="amount">Valor em euros</label>
+<input id="amount" aria-describedby="amount-help" name="amount" inputmode="decimal" placeholder="0.00" pattern="[0-9]{1,7}(\.[0-9]{1,2})?" maxlength="10" required>
+<small class="field-help" id="amount-help">Usa ponto decimal. Exemplo: 25.50. Confere o valor antes de confirmar.</small>
+<button class="button">{{ 'Registar depósito' if g.user.role == 'ADMIN' else 'Confirmar transferência' }} <span>→</span>
+</button>
+</form>
+{% endif %}
+</section>
+</div>
+<section class="panel statement" id="statement">
+<div class="section-title">
+<h2>Extrato da conta</h2>
+<span class="muted small">Mais recentes primeiro</span>
+</div>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Operação</th>
+<th>Data</th>
+<th>Contraparte</th>
+<th class="numeric">Valor</th>
+<th class="numeric">Saldo após</th>
+</tr>
+</thead>
+<tbody>
+{% for entry in entries %}
+<tr>
+<td>
+<span class="movement-icon">{{ '↙' if entry.direction == '+' else '↗' }}</span>{{ 'Juros de poupança' if entry.kind == 'INTEREST' else 'Estorno' if entry.kind == 'REVERSAL' else 'Depósito simulado' if entry.kind == 'DEPOSIT' else 'Transferência recebida' if entry.direction == '+' else 'Transferência enviada' }}<small class="row-meta">{% if g.user.role == 'ADMIN' %}<a href="{{ url_for('transaction_detail', transaction_id=entry.transaction_id) }}">Operação #{{ entry.transaction_id }} · Ver detalhes →</a>{% else %}Operação #{{ entry.transaction_id }}{% endif %}
+{% if entry.reversed_by %} · Estornada por #{{ entry.reversed_by }}{% endif %}{% if entry.original_id %} · Original #{{ entry.original_id }}{% endif %}</small>
+</td>
+<td>{{ entry.created_at.strftime('%d/%m/%Y · %H:%M') }}</td>
+<td>{{ (entry.source_id if entry.direction == '+' else entry.target_id)|account_number }}</td>
+<td class="numeric {{ 'positive' if entry.direction == '+' }}">{{ entry.direction }} {{ entry.amount|money }}</td>
+<td class="numeric">{{ entry.balance_after|money }}</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="5" class="table-empty">Ainda não há movimentos nesta conta.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% if entries|length == 50 %}
+<a class="text-link" href="{{ url_for('account_detail', account_id=account.id, before=entries[-1].id) }}">Movimentos anteriores →</a>
+{% endif %}
+</section>
+{% endblock %}

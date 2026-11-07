@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>
+{% block title %}Conta Clara · Mini banco{% endblock %}
+</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='bank.css') }}">
+{% if g.user and g.user.role == 'CUSTOMER' %}<script src="{{ url_for('static', filename='notifications.js') }}" defer></script>{% endif %}
+</head>
+<body>
+<a class="skip-link" href="#main-content">Ir para o conteúdo</a>
+{% if g.user %}
+<aside class="sidebar">
+<a class="brand" href="{{ url_for('dashboard') }}">
+<span class="brand-icon">c.</span> conta clara<span class="brand-dot">●</span>
+</a>
+<span class="workspace">{{ 'ADMINISTRAÇÃO' if g.user.role == 'ADMIN' else 'O TEU BANCO' }}</span>
+<nav aria-label="Navegação principal">
+<a class="nav-link" {% if request.endpoint in ('dashboard', 'account_detail') %}aria-current="page"{% endif %} href="{{ url_for('dashboard') }}">
+<span>▦</span> {{ 'Contas e clientes' if g.user.role == 'ADMIN' else 'As minhas contas' }}</a>
+{% if g.user.role == 'ADMIN' %}
+<a class="nav-link" {% if request.endpoint in ('onboarding', 'create_customer', 'create_account') %}aria-current="page"{% endif %} href="{{ url_for('onboarding') }}"><span>+</span> Criar acesso</a>
+<a class="nav-link" {% if request.endpoint == 'approvals' %}aria-current="page"{% endif %} href="{{ url_for('approvals') }}"><span>✓</span> Aprovar contas</a>
+<a class="nav-link" {% if request.endpoint == 'audit_log' %}aria-current="page"{% endif %} href="{{ url_for('audit_log') }}">
+<span>≡</span> Auditoria</a>
+<a class="nav-link" {% if request.endpoint in ('reports', 'report_detail', 'reconcile', 'close_day') %}aria-current="page"{% endif %} href="{{ url_for('reports') }}"><span>◎</span> Fecho e reconciliação</a>
+{% else %}
+<a class="nav-link" {% if request.endpoint in ('new_account', 'request_account') %}aria-current="page"{% endif %} href="{{ url_for('new_account') }}"><span>+</span> Pedir nova conta</a>
+{% endif %}
+</nav>
+<div class="sidebar-bottom">
+<span class="avatar">{{ g.user.name[:1]|upper }}</span>
+<div>
+<strong>{{ g.user.name }}</strong>
+<small>{{ 'Administrador' if g.user.role == 'ADMIN' else 'Cliente' }}</small>
+</div>
+<form action="{{ url_for('logout') }}" method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<button class="logout" aria-label="Terminar sessão" title="Terminar sessão">↗</button>
+</form>
+</div>
+</aside>
+{% endif %}
+<main id="main-content" tabindex="-1" class="{{ 'main' if g.user else 'public-main' }}">
+{% if g.user %}
+<header class="topbar">
+<span>O essencial, com clareza.</span>
+{% if g.user.role == 'CUSTOMER' %}
+<a id="notification-bell" class="notification-bell" href="{{ url_for('dashboard', _anchor='notifications') }}" data-feed-url="{{ url_for('notification_feed') }}" aria-label="Notificações: {{ notification_count }} não lidas">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+<span id="notification-count" class="notification-count" aria-hidden="true">{{ notification_count }}</span><span class="small">Notificações</span></a>
+{% endif %}
+<span class="demo-badge">● Ambiente de demonstração</span>
+</header>
+{% if g.user.role == 'CUSTOMER' %}<p id="notification-update-status" class="small muted" role="status" aria-live="polite"></p>{% endif %}
+{% endif %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% for category, message in messages %}
+<div class="notice {{ category }}" role="status">{{ message }}</div>
+{% endfor %}
+{% endwith %}
+{% block content %}
+{% endblock %}
+</main>
+</body>
+</html>

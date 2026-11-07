@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-heading">
+<div>
+<span class="eyebrow">{{ 'VISÃO GERAL' if g.user.role == 'ADMIN' else 'O TEU DIA A DIA' }}</span>
+<h1>{{ 'Contas e clientes' if g.user.role == 'ADMIN' else 'Olá, ' ~ g.user.name.split()[0] ~ '.' }}</h1>
+<p class="muted">{{ 'Um lugar para gerir cada relação.' if g.user.role == 'ADMIN' else 'Acompanha as tuas contas. Cada movimento conta.' }}</p>
+</div>
+<span class="page-number">01 — CONTAS</span>
+</section>
+{% if g.user.role == 'CUSTOMER' %}{% include 'notifications.html' %}{% endif %}
+<div class="overview-grid" aria-label="Resumo das contas nesta página">
+<section class="metric"><span>Contas nesta página</span><strong>{{ accounts|length }}</strong><small>Até 50 por página</small></section>
+<section class="metric"><span>Contas ativas</span><strong>{{ accounts|selectattr('status', 'equalto', 'ACTIVE')|list|length }}</strong><small>Disponíveis para movimentos</small></section>
+<section class="metric"><span>Contas pendentes</span><strong>{{ accounts|selectattr('status', 'equalto', 'PENDING')|list|length }}</strong><small>Aguardam aprovação</small></section>
+</div>
+<section class="action-banner">
+<div><span class="eyebrow">PRÓXIMO PASSO</span>
+<h2>{{ 'Gere acessos e aprova pedidos.' if g.user.role == 'ADMIN' else 'O teu acesso. As tuas contas.' }}</h2>
+<p class="muted">{{ 'Cria acessos pessoais e aprova as contas pedidas pelos utilizadores.' if g.user.role == 'ADMIN' else 'Consulta as tuas contas abaixo ou pede uma nova: até 3 à ordem e 2 poupanças, sujeitas a aprovação.' }}</p></div>
+<a class="button" href="{{ url_for('approvals') if g.user.role == 'ADMIN' else url_for('new_account') }}">{{ 'Aprovar contas' if g.user.role == 'ADMIN' else 'Pedir nova conta' }} <span>→</span></a>
+</section>
+<section id="accounts" class="section-title accounts-title">
+<h2>{{ 'Contas registadas' if g.user.role == 'ADMIN' else 'As tuas contas' }}</h2>
+<span class="muted small">{{ accounts|length }} nesta página · EUR</span>
+</section>
+<div class="account-grid">
+{% for account in accounts %}
+<a class="account-card" href="{{ url_for('account_detail', account_id=account.id) }}">
+<div class="card-top">
+<span class="account-label">{{ 'POUPANÇA · 3,65% / ANO' if account.account_type == 'SAVINGS' else 'CONTA À ORDEM' }}</span>
+<span class="status {{ 'blocked' if account.status in ('BLOCKED', 'REJECTED', 'CANCELLED') else 'pending' if account.status == 'PENDING' }}">{{ account.status|account_status }}</span>
+</div>
+{% if account.rejection_reason %}<p class="rejection-reason"><strong>Motivo da rejeição:</strong> {{ account.rejection_reason }}</p>{% endif %}
+<span class="account-code">{{ account.id|account_number }}</span>
+<strong class="balance">{{ account.balance|money }}</strong>
+<div class="card-bottom">
+<span>{{ account.owner_name }}</span>
+<span class="card-action">Ver conta →</span>
+</div>
+</a>
+{% else %}
+<div class="empty">
+<span>◎</span>
+<h3>Ainda sem contas</h3>
+<p>{{ 'Cria um acesso para o utilizador poder pedir contas.' if g.user.role == 'ADMIN' else 'O teu acesso está pronto. Seleciona “Pedir nova conta” para começar.' }}</p>
+</div>
+{% endfor %}
+</div>
+{% if accounts|length == 50 %}
+<a class="text-link" href="{{ url_for('dashboard', before=accounts[-1].id) }}">Contas anteriores →</a>
+{% endif %}
+{% endblock %}

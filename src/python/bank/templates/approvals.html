@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Aprovar contas · Conta Clara{% endblock %}
+{% block content %}
+<section class="page-heading"><div><span class="eyebrow">ADMINISTRAÇÃO</span><h1>Pedidos de abertura</h1><p class="muted">Confere o titular e o tipo de conta antes de aprovar. As contas pendentes não permitem movimentos.</p></div></section>
+<section class="panel"><div class="table-scroll"><table><thead><tr><th>Conta</th><th>Titular</th><th>Tipo</th><th>Pedido em</th><th>Ação</th></tr></thead><tbody>
+{% for account in accounts %}<tr><td><a class="inline-link" href="{{ url_for('account_detail', account_id=account.id) }}">{{ account.id|account_number }}</a></td><td>{{ account.owner_name }}<small class="row-meta">{{ account.email }}</small></td><td>{{ 'Poupança' if account.account_type == 'SAVINGS' else 'À ordem' }}</td><td>{{ account.created_at.strftime('%d/%m/%Y · %H:%M') }}</td><td><form method="post" action="{{ url_for('approve_account', account_id=account.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary">Aprovar conta</button></form><a class="text-link" href="{{ url_for('account_detail', account_id=account.id) }}#account-operation">Analisar / rejeitar →</a></td></tr>
+{% else %}<tr><td colspan="5" class="table-empty">Não há pedidos pendentes nesta página.</td></tr>{% endfor %}
+</tbody></table></div>{% if accounts|length == 50 %}<a class="text-link" href="{{ url_for('approvals', before=accounts[-1].id) }}">Pedidos anteriores →</a>{% endif %}</section>
+{% endblock %}

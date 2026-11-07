@@ -1,0 +1,15 @@
+<section class="panel notification-panel" id="notifications" aria-labelledby="notifications-title">
+<div class="section-title"><h2 id="notifications-title" tabindex="-1">Notificações</h2><span class="muted small">{{ notification_count }} não lidas no total</span></div>
+{% if notification_count %}<form method="post" data-notification-action action="{{ url_for('read_all_notifications') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary">Marcar todas como lidas</button><p class="field-help">Inclui as notificações das outras páginas.</p></form>{% endif %}
+{% for notification in notifications %}
+<article class="notification-item">
+<div class="section-title"><h3>{{ 'Conta aprovada' if notification.kind == 'ACCOUNT_APPROVED' else 'Pedido rejeitado' }}</h3><span class="status {{ 'pending' if not notification.read_at }}">{{ 'Lida' if notification.read_at else 'Por ler' }}</span></div>
+<p><a class="inline-link" href="{{ url_for('account_detail', account_id=notification.account_id) }}">{{ notification.account_id|account_number }} · Ver detalhes →</a></p>
+{% if notification.reason %}<p class="rejection-reason"><strong>Motivo da rejeição:</strong> {{ notification.reason }}</p>{% endif %}
+<p class="muted small">{{ notification.created_at.strftime('%d/%m/%Y · %H:%M') }}{% if notification.read_at %} · Lida em {{ notification.read_at.strftime('%d/%m/%Y · %H:%M') }}{% endif %}</p>
+{% if not notification.read_at %}<form method="post" data-notification-action action="{{ url_for('read_notification', notification_id=notification.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary">Marcar como lida</button></form>{% endif %}
+</article>
+{% else %}<p class="muted">Não há notificações nesta página. As próximas aprovações e rejeições aparecerão aqui.</p>{% endfor %}
+{% if notifications|length == 50 %}<a class="text-link" href="{{ url_for('dashboard', notification_before=notifications[-1].id, _anchor='notifications') }}">Notificações anteriores →</a>{% endif %}
+{% if request.args.get('notification_before') %}<a class="text-link" href="{{ url_for('dashboard', _anchor='notifications') }}">Notificações mais recentes →</a>{% endif %}
+</section>

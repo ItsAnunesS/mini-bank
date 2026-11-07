@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-heading">
+<div>
+<span class="eyebrow">RASTREABILIDADE</span>
+<h1>Histórico de ações</h1>
+<p class="muted">Quem fez o quê, e quando.</p>
+</div>
+<span class="page-number">02 — AUDITORIA</span>
+</section>
+<section class="panel">
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Data</th>
+<th>Utilizador</th>
+<th>Ação</th>
+<th>Referência</th>
+</tr>
+</thead>
+<tbody>
+{% set labels = {'ADMIN_CREATED': 'Administrador criado', 'CUSTOMER_CREATED': 'Cliente criado', 'ACCOUNT_CREATED': 'Conta criada', 'ACCOUNT_REQUESTED': 'Conta pedida', 'ACCOUNT_APPROVED': 'Conta aprovada', 'ACCOUNT_REJECTED': 'Pedido rejeitado', 'ACCOUNT_CANCELLED': 'Pedido cancelado', 'ACCOUNT_ACTIVE': 'Conta ativada', 'ACCOUNT_BLOCKED': 'Conta bloqueada', 'DEPOSIT': 'Depósito simulado', 'TRANSFER': 'Transferência', 'INTEREST': 'Juros de poupança', 'REVERSAL': 'Estorno', 'CLOSE_DAY': 'Fecho diário', 'RECONCILE': 'Reconciliação'} %}
+{% for event in events %}
+<tr>
+<td>{{ event.created_at.strftime('%d/%m/%Y · %H:%M') }}</td>
+<td>{{ event.name }}</td>
+<td>{{ labels.get(event.action, event.action) }}</td>
+<td>#{{ event.subject_id }}</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="4" class="table-empty">Ainda não há ações registadas.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% if events|length == 50 %}
+<a class="text-link" href="{{ url_for('audit_log', before=events[-1].id) }}">Ações anteriores →</a>
+{% endif %}
+</section>
+{% endblock %}

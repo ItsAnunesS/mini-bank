@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="error-page">
+<span class="circle-icon">!</span>
+<h1>{{ title }}</h1>
+<p class="muted" role="alert">{{ message }}</p>
+<a class="button" href="{{ url_for('dashboard') if g.user else url_for('login') }}">Voltar ao início →</a>
+</section>
+{% endblock %}

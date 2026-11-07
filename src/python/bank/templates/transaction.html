@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Operação #{{ transaction.id }} · Conta Clara{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('account_detail', account_id=transaction.target_id) }}">← Ver conta associada</a>
+{% set labels = {'DEPOSIT':'Depósito simulado','TRANSFER':'Transferência','INTEREST':'Juros de poupança','REVERSAL':'Estorno'} %}
+<section class="page-heading"><div><span class="eyebrow">{{ labels.get(transaction.kind, transaction.kind) }}</span><h1>Operação #{{ transaction.id }}</h1><p class="muted">{{ transaction.created_at.strftime('%d/%m/%Y · %H:%M:%S') }}</p></div></section>
+<div class="detail-grid"><section class="balance-panel"><span class="eyebrow">VALOR ORIGINAL</span><strong>{{ transaction.amount|money }}</strong><p>Origem: {{ transaction.source_id|account_number }}</p><p>Conta associada: {{ transaction.target_id|account_number }}</p></section>
+<section class="panel">
+{% if transaction.kind == 'REVERSAL' %}<h2>Estorno registado</h2><p>Operação original: <a class="inline-link" href="{{ url_for('transaction_detail', transaction_id=transaction.original_id) }}">#{{ transaction.original_id }}</a></p><p class="reason-text">{{ transaction.reason }}</p>
+{% elif transaction.reversed_by %}<h2>Operação já estornada</h2><a class="text-link" href="{{ url_for('transaction_detail', transaction_id=transaction.reversed_by) }}">Consultar estorno #{{ transaction.reversed_by }} →</a>
+{% else %}<h2>Estornar integralmente</h2><p class="muted">Cria uma operação compensatória de {{ transaction.amount|money }}. O histórico original permanece intacto. As contas devem estar ativas e ter saldo suficiente.</p>
+<form method="post" action="{{ url_for('reverse_transaction', transaction_id=transaction.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="reason">Motivo do estorno</label><textarea id="reason" name="reason" minlength="5" maxlength="240" rows="3" required></textarea><small class="field-help">Entre 5 caracteres e 240 bytes. Evita dados pessoais desnecessários.</small><label class="check-label"><input type="checkbox" name="confirmed" value="yes" required> Confirmo o estorno integral desta operação.</label><button class="button">Registar estorno →</button></form>{% endif %}
+</section></div>
+{% endblock %}

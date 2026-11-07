@@ -106,8 +106,14 @@ def authenticate(email, password):
 
 
 def session_user(token):
-    rows = call_backend('SESSION', token=token)['rows'] if token else []
-    return rows[0] if rows else None
+    if not token:
+        return None
+    response = call_backend('SESSION', token=token)
+    if not response['rows']:
+        return None
+    user = response['rows'][0]
+    user['unread_count'] = int(response.get('unread_count', 0))
+    return user
 
 
 def revoke_session(token):

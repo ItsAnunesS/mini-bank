@@ -6,16 +6,16 @@
 <title>
 {% block title %}MiniBank{% endblock %}
 </title>
-<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='minibank.svg') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='bank.css') }}">
-{% if g.user and g.user.role == 'CUSTOMER' %}<script src="{{ url_for('static', filename='notifications.js') }}" defer></script>{% endif %}
+<link rel="icon" type="image/svg+xml" href="{{ asset_url('minibank.svg') }}">
+<link rel="stylesheet" href="{{ asset_url('bank.css') }}">
+{% if g.user and g.user.role == 'CUSTOMER' %}<script src="{{ asset_url('notifications.js') }}" defer></script>{% endif %}
 </head>
 <body>
 <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
 {% if g.user %}
 <aside class="sidebar">
 <a class="brand" href="{{ url_for('dashboard') }}">
-<img class="brand-logo" src="{{ url_for('static', filename='minibank.svg') }}" alt="" width="40" height="40"> MiniBank
+<img class="brand-logo" src="{{ asset_url('minibank.svg') }}" alt="" width="40" height="40"> MiniBank
 </a>
 <span class="workspace">{{ 'ADMINISTRAÇÃO' if g.user.role == 'ADMIN' else 'O TEU BANCO' }}</span>
 <nav aria-label="Navegação principal">

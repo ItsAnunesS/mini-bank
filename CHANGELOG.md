@@ -6,6 +6,9 @@ Alterações relevantes do projeto, com datas no formato AAAA-MM-DD.
 
 ### Adicionado
 
+- Notificações de aprovação/rejeição de empréstimos no sino existente, com motivo escapado, ligação ao pedido, leitura individual/em lote e gravação atómica com a decisão.
+- Migração 008 preserva notificações e datas de leitura anteriores; unicidade por decisão suporta vários empréstimos na mesma conta.
+
 - Extratos mensais por conta, com saldos de abertura/fecho, totais e exportação CSV completa até 1.000 movimentos.
 - Limites de transferência por operação/dia configuráveis pelo administrador, com validação concorrente em COBOL.
 - Comissão mensal simulada de 2 €, cobrança idempotente e isenções por conta e para poupanças.
@@ -44,6 +47,9 @@ Alterações relevantes do projeto, com datas no formato AAAA-MM-DD.
 
 ### Alterado
 
+- Navegação reutiliza o contador recebido com a sessão; polling fora do painel descarrega só o total e não repete a consulta imediatamente após carregar a página.
+- CSS, JavaScript e logótipo com cache versionado por conteúdo; dados pessoais continuam sem cache. Cabeçalho Server-Timing permite diagnosticar a duração no servidor.
+
 - Backend web reutiliza processos COBOL e ligações Db2 por thread, eliminando a abertura repetida de ligações em cada consulta. Estado, autorização e transação continuam isolados por pedido; falhas não provocam repetição automática de movimentos.
 
 - Criação de cliente passa a criar apenas o acesso; o painel permite escolher contas existentes ou pedir uma nova. `CREATE_CUSTOMER` devolve agora o ID do utilizador.
@@ -65,6 +71,11 @@ Alterações relevantes do projeto, com datas no formato AAAA-MM-DD.
 - Credenciais fora do Git e permissões limitadas para a aplicação.
 
 ### Verificação
+
+- Migração 008 aplicada com comparação de todas as colunas preexistentes: dados e datas de leitura preservados.
+- 77 testes da aplicação aprovados em Docker/Db2 isolado. Incluem notificações de empréstimos concorrentes, rollback do crédito quando o aviso falha, preservação de notificações anteriores, autorização, escape HTML e cache exclusivo de recursos públicos.
+- Aprovação/rejeição e leitura em lote verificadas no navegador: o sino atualiza sem recarregar e o motivo permanece visível após leitura.
+- Medição HTTP com Gunicorn real: medianas locais de cerca de 8–12 ms nas páginas autenticadas; não foi reproduzida uma demora de vários segundos. Reduzidas chamadas por navegação (detalhe: 3 → 2) e pelo sino fora do painel (3 → 1); cache estático evita downloads repetidos.
 
 - Migração 007 aplicada com comparação dos valores de todas as colunas preexistentes: utilizadores, contas, saldos, movimentos, sessões e relatórios preservados.
 - 70 testes da aplicação aprovados em Docker/Db2 isolado, incluindo 14 testes de produtos: limites concorrentes, duplicação de cobranças/aprovações/pagamentos, arredondamento, rollback, CSV, CSRF, autorização e encerramento. Extratos, empréstimos, identidade e administração verificados no navegador.

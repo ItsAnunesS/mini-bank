@@ -188,7 +188,8 @@ initialize-schema.
     perform execute-query perform fetch-row
     if fetch-status = 2
         move 7 to migration-version perform apply-migration
-    end-if.
+    end-if
+    perform upgrade-loan-notifications.
 upgrade-daily-schema.
     *> Replace the original unnamed kind constraint in the same DDL transaction.
     perform reset-query
@@ -270,3 +271,25 @@ validate-reason.
     if reason-characters < 5
         move "INVALID_REASON" to error-code perform finish-request
     end-if.
+
+upgrade-loan-notifications.
+    perform reset-query
+    move "SELECT COLNAME FROM SYSCAT.COLUMNS WHERE TABSCHEMA = CURRENT SCHEMA AND TABNAME = 'BANK_NOTIFICATIONS' AND COLNAME = 'LOAN_ID'" to query-sql
+    perform execute-query perform fetch-row
+    if fetch-status = zero exit paragraph end-if
+    *> Replace only event uniqueness/check constraints, keeping primary and foreign keys.
+    move zero to fetch-status
+    perform until fetch-status = 2
+        perform reset-query
+        move "SELECT CONSTNAME FROM SYSCAT.TABCONST WHERE TABSCHEMA = CURRENT SCHEMA AND TABNAME = 'BANK_NOTIFICATIONS' AND TYPE IN ('U','K') FETCH FIRST 1 ROW ONLY" to query-sql
+        perform execute-query perform fetch-row
+        if fetch-status = zero
+            move 1 to parameter-index perform read-column
+            move column-value(1:128) to constraint-name
+            perform reset-query
+            string 'ALTER TABLE BANK_NOTIFICATIONS DROP CONSTRAINT "'
+                function trim(constraint-name) '"' into query-sql end-string
+            perform execute-query
+        end-if
+    end-perform
+    move 8 to migration-version perform apply-migration.

@@ -66,7 +66,16 @@ lookup-session.
 read-session.
     perform lookup-session
     if fetch-status = zero
+        move 1 to parameter-index perform read-column
+        move column-value(1:19) to actor-id
+        move 4 to parameter-index perform read-column
+        move column-value(1:10) to actor-role
         call static "bank_result_row" using x"00" end-call
+        if actor-role = "CUSTOMER"
+            perform load-unread-count
+            move 1 to parameter-index perform read-column
+            call static "bank_text" using z"unread_count" column-value by value 512 end-call
+        end-if
     end-if.
 authorize-session.
     perform lookup-session

@@ -133,7 +133,8 @@ approve-loan.
     move loan-id to parameter-value perform add-parameter
     perform execute-query
     move "LOAN_APPROVED" to audit-action
-    move loan-id to audit-subject perform write-audit.
+    move loan-id to audit-subject perform write-audit
+    perform create-loan-notification.
 reject-loan.
     perform require-admin
     perform validate-reason
@@ -159,7 +160,8 @@ reject-loan.
     move loan-id to parameter-value perform add-parameter
     perform execute-query
     move "LOAN_REJECTED" to audit-action
-    move loan-id to audit-subject perform write-audit.
+    move loan-id to audit-subject perform write-audit
+    perform create-loan-notification.
 pay-loan.
     perform require-customer
     perform validate-request-key

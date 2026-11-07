@@ -321,6 +321,7 @@ int bank_migration(int version, char *sql, int size) {
     else if (version == 5) path = "/app/db/migrations/005_account_resolution.sql";
     else if (version == 6) path = "/app/db/migrations/006_notifications.sql";
     else if (version == 7) path = "/app/db/migrations/007_banking_products.sql";
+    else if (version == 8) path = "/app/db/migrations/008_loan_notifications.sql";
     else return 1;
     if (!migration) migration = fopen(path, "r");
     if (!migration) return 1;

@@ -3,8 +3,9 @@
 {% if notification_count %}<form method="post" data-notification-action action="{{ url_for('read_all_notifications') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary">Marcar todas como lidas</button><p class="field-help">Inclui as notificações das outras páginas.</p></form>{% endif %}
 {% for notification in notifications %}
 <article class="notification-item">
-<div class="section-title"><h3>{{ 'Conta aprovada' if notification.kind == 'ACCOUNT_APPROVED' else 'Pedido rejeitado' }}</h3><span class="status {{ 'pending' if not notification.read_at }}">{{ 'Lida' if notification.read_at else 'Por ler' }}</span></div>
-<p><a class="inline-link" href="{{ url_for('account_detail', account_id=notification.account_id) }}">{{ notification.account_id|account_number }} · Ver detalhes →</a></p>
+<div class="section-title"><h3>{{ {'ACCOUNT_APPROVED': 'Conta aprovada', 'ACCOUNT_REJECTED': 'Pedido de conta rejeitado', 'LOAN_APPROVED': 'Empréstimo aprovado', 'LOAN_REJECTED': 'Empréstimo rejeitado'}[notification.kind] }}</h3><span class="status {{ 'pending' if not notification.read_at }}">{{ 'Lida' if notification.read_at else 'Por ler' }}</span></div>
+{% if notification.loan_id %}<p><a class="inline-link" href="{{ url_for('loan_detail', loan_id=notification.loan_id) }}">Empréstimo #{{ notification.loan_id }} · Ver detalhes →</a><span class="row-meta">{{ notification.account_id|account_number }}</span></p>
+{% else %}<p><a class="inline-link" href="{{ url_for('account_detail', account_id=notification.account_id) }}">{{ notification.account_id|account_number }} · Ver detalhes →</a></p>{% endif %}
 {% if notification.reason %}<p class="rejection-reason"><strong>Motivo da rejeição:</strong> {{ notification.reason }}</p>{% endif %}
 <p class="muted small">{{ notification.created_at.strftime('%d/%m/%Y · %H:%M') }}{% if notification.read_at %} · Lida em {{ notification.read_at.strftime('%d/%m/%Y · %H:%M') }}{% endif %}</p>
 {% if not notification.read_at %}<form method="post" data-notification-action action="{{ url_for('read_notification', notification_id=notification.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary">Marcar como lida</button></form>{% endif %}

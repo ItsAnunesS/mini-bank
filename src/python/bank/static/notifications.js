@@ -7,6 +7,7 @@
     const feedUrl = new URL(bell.dataset.feedUrl, window.location.origin);
     const cursor = new URL(window.location.href).searchParams.get('notification_before');
     if (cursor) feedUrl.searchParams.set('notification_before', cursor);
+    if (!document.getElementById('notifications')) feedUrl.searchParams.set('summary', '1');
     let timer;
     let polling = false;
     let pollFinished = Promise.resolve();
@@ -104,5 +105,6 @@
         clearTimeout(timer);
         if (!document.hidden) refresh();
     });
-    refresh();
+    // Initial HTML already contains the fresh count and panel.
+    schedule();
 })();

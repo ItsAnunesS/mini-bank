@@ -32,7 +32,7 @@ Cada cliente pode ter até **3 contas à ordem e 2 poupanças**. Contas pendente
 
 O administrador pode **rejeitar um pedido pendente**, indicando um motivo com pelo menos 5 caracteres e até 240 bytes. O titular vê o motivo no painel e no detalhe. No detalhe de um pedido pendente, o titular pode escolher **Cancelar pedido**. Pedidos rejeitados ou cancelados mantêm o histórico, deixam de ocupar vagas e não podem ser ativados; o cliente pode enviar um novo pedido. A primeira decisão confirmada prevalece se houver ações simultâneas.
 
-O painel do cliente inclui **Notificações** de novas aprovações e rejeições, com ligação à conta e motivo da rejeição. **Marcar como lida** guarda a data de leitura sem apagar o aviso. O sino mostra o total de não lidas, incluindo outras páginas. A lista tem páginas de 50 notificações. O contador e a lista atualizam automaticamente a cada 15 segundos com a aba visível e ao regressar à aba, com novas tentativas mais espaçadas em caso de falha. **Marcar todas como lidas** abrange todas as notificações não lidas do titular no momento da operação, sem apagar o histórico nem alterar datas já registadas. Novos avisos após essa operação continuam por ler. Os formulários também funcionam sem JavaScript. A migração não gera avisos retroativos para decisões anteriores.
+O painel do cliente inclui **Notificações** de novas aprovações e rejeições de contas e empréstimos, com ligação ao respetivo detalhe e motivo da rejeição. **Marcar como lida** guarda a data de leitura sem apagar o aviso. O sino mostra o total de não lidas, incluindo outras páginas. A lista tem páginas de 50 notificações. O contador e a lista atualizam automaticamente a cada 15 segundos com a aba visível e ao regressar à aba, com novas tentativas mais espaçadas em caso de falha. **Marcar todas como lidas** abrange todas as notificações não lidas do titular no momento da operação, sem apagar o histórico nem alterar datas já registadas. Novos avisos após essa operação continuam por ler. Os formulários também funcionam sem JavaScript. A migração não gera avisos retroativos para decisões anteriores.
 
 A palavra-passe inicial do cliente deve ser entregue por um canal privado. Esta versão ainda não inclui recuperação ou alteração de palavra-passe pela interface, criação de administradores adicionais, levantamentos, cartões ou integração com bancos reais.
 
@@ -57,6 +57,14 @@ O pagamento é manual, por ordem das prestações, com débito na conta associad
 O titular pode encerrar uma conta ativa com **saldo zero e sem empréstimos pendentes ou ativos**, através de confirmação explícita em Serviços da conta. A conta fica definitivamente encerrada, liberta a vaga no limite de contas e conserva todos os movimentos, pedidos e extratos. Não pode ser reativada nem receber dinheiro. Contas bloqueadas precisam primeiro de intervenção administrativa.
 
 A migração `007_banking_products.sql` adiciona os produtos e limites sem apagar utilizadores, contas ou movimentos. As contas existentes recebem os limites predefinidos; nenhuma comissão ou operação de crédito é lançada pela migração. Comissões, créditos de empréstimos e pagamentos integram o extrato e a reconciliação, mas não admitem estorno genérico nesta versão.
+
+A migração `008_loan_notifications.sql` preserva os avisos existentes e acrescenta a ligação a empréstimos. Aprovação/rejeição, crédito do empréstimo e notificação partilham a mesma transação. Repetições não duplicam avisos e não são criadas notificações retroativas.
+
+### Desempenho da navegação
+
+O contador inicial do sino acompanha a validação da sessão, evitando uma chamada adicional ao backend. A atualização automática começa após 15 segundos: o HTML inicial já contém dados atuais. Fora do painel, o sino pede apenas o contador, sem renderizar/descarregar a lista completa. CSS, JavaScript e logótipo usam URLs com versão do conteúdo e cache do navegador; uma alteração gera outra URL. Páginas, extratos, sessões e notificações continuam com `Cache-Control: no-store`.
+
+O cabeçalho `Server-Timing` indica o tempo de processamento da aplicação, em milissegundos, para distinguir processamento do servidor de espera na rede/navegador. Não inclui conteúdo de pedidos nem identificadores pessoais.
 
 ### Configuração
 

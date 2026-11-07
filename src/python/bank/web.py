@@ -1,6 +1,9 @@
 """Server-rendered banking interface with CSRF and server-side authorization."""
 import os
 import secrets
+from hashlib import sha256
+from pathlib import Path
+from time import perf_counter
 from datetime import timedelta
 from functools import wraps
 from uuid import uuid4
@@ -24,6 +27,13 @@ def create_app():
                       PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
                       WTF_CSRF_TIME_LIMIT=1800,
                       TRUSTED_HOSTS=['localhost', '127.0.0.1'])
+    asset_versions = {path.name: sha256(path.read_bytes()).hexdigest()[:16]
+                      for path in Path(app.static_folder).iterdir() if path.is_file()}
+
+    @app.before_request
+    def start_request_timer():
+        g.request_started = perf_counter()
+
     CSRFProtect(app)
 
     def protected(role=None):
@@ -49,7 +59,14 @@ def create_app():
         response.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self'; script-src 'self'; script-src-attr 'none'; img-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['Referrer-Policy'] = 'no-referrer'
-        response.headers['Cache-Control'] = 'no-store'
+        response.headers['Server-Timing'] = f'app;dur={(perf_counter() - g.request_started) * 1000:.2f}'
+        if request.endpoint == 'static' and response.status_code in (200, 304):
+            filename = (request.view_args or {}).get('filename')
+            version = asset_versions.get(filename)
+            response.headers['Cache-Control'] = ('public, max-age=31536000, immutable'
+                if version and request.args.get('v') == version else 'public, max-age=0, must-revalidate')
+        else:
+            response.headers['Cache-Control'] = 'no-store'
         return response
 
     @app.template_filter('account_status')
@@ -70,9 +87,10 @@ def create_app():
         notification_count = 0
         if getattr(g, 'user', None) and g.user['role'] == 'CUSTOMER':
             if not hasattr(g, 'notification_count'):
-                g.notification_count = client.count_unread_notifications(request.cookies.get('bank_auth'))
+                g.notification_count = g.user.get('unread_count', 0)
             notification_count = g.notification_count
-        return {'new_request_key': lambda: str(uuid4()), 'notification_count': notification_count}
+        return {'new_request_key': lambda: str(uuid4()), 'notification_count': notification_count,
+                'asset_url': lambda filename: url_for('static', filename=filename, v=asset_versions.get(filename))}
 
     @app.get('/health')
     def health():
@@ -126,8 +144,10 @@ def create_app():
     @protected('CUSTOMER')
     def notification_feed():
         token = request.cookies.get('bank_auth')
+        g.notification_count = g.user['unread_count']
+        if request.args.get('summary') == '1':
+            return {'unread_count': g.notification_count}
         notifications = client.list_notifications(token, request.args.get('notification_before', '9223372036854775807'))
-        g.notification_count = client.count_unread_notifications(token)
         return {'unread_count': g.notification_count,
                 'html': render_template('notifications.html', notifications=notifications)}
 

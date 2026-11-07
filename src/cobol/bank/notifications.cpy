@@ -15,7 +15,7 @@ require-notification-owner.
 list-notifications.
     perform require-notification-owner
     perform reset-query
-    move "SELECT ID, ACCOUNT_ID, KIND, REASON, CREATED_AT, READ_AT FROM BANK_NOTIFICATIONS WHERE USER_ID = ? AND ID < ? ORDER BY ID DESC FETCH FIRST 50 ROWS ONLY"
+    move "SELECT ID, ACCOUNT_ID, LOAN_ID, KIND, REASON, CREATED_AT, READ_AT FROM BANK_NOTIFICATIONS WHERE USER_ID = ? AND ID < ? ORDER BY ID DESC FETCH FIRST 50 ROWS ONLY"
         to query-sql
     move actor-id to parameter-value perform add-parameter
     move request-cursor to parameter-value perform add-parameter
@@ -35,15 +35,26 @@ mark-notification-read.
     end-if.
 count-unread-notifications.
     perform require-notification-owner
+    perform load-unread-count
+    call static "bank_result_row" using x"00" end-call.
+load-unread-count.
     perform reset-query
     move "SELECT COUNT_BIG(*) AS UNREAD_COUNT FROM BANK_NOTIFICATIONS WHERE USER_ID = ? AND READ_AT IS NULL"
         to query-sql
     move actor-id to parameter-value perform add-parameter
-    perform execute-query perform append-rows.
+    perform execute-query perform fetch-row.
 mark-all-notifications-read.
     perform require-notification-owner
     perform reset-query
     move "UPDATE BANK_NOTIFICATIONS SET READ_AT = CURRENT TIMESTAMP WHERE USER_ID = ? AND READ_AT IS NULL"
         to query-sql
     move actor-id to parameter-value perform add-parameter
+    perform execute-query.
+
+create-loan-notification.
+    *> Persist the decision, ledger and notification in the same transaction.
+    perform reset-query
+    move "INSERT INTO BANK_NOTIFICATIONS (USER_ID, ACCOUNT_ID, LOAN_ID, KIND, REASON) SELECT USER_ID, ACCOUNT_ID, ID, ?, REASON FROM BANK_LOANS WHERE ID = ?" to query-sql
+    move audit-action to parameter-value perform add-parameter
+    move loan-id to parameter-value perform add-parameter
     perform execute-query.

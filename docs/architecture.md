@@ -121,11 +121,11 @@ A migração 005 amplia os estados e cria a tabela de decisões numa transação
 
 ### Notificações
 
-`bank/notifications.cpy` cria uma notificação para o titular na mesma transação de cada nova aprovação ou rejeição. `BANK_NOTIFICATIONS` conserva conta, tipo, motivo, criação e leitura. A chave única por conta/tipo e as decisões idempotentes impedem duplicação. Cancelamentos não geram notificações administrativas. A migração 006 não cria avisos retroativos.
+`bank/notifications.cpy` cria uma notificação para o titular na mesma transação de cada nova aprovação ou rejeição. `BANK_NOTIFICATIONS` conserva conta, empréstimo opcional, tipo, motivo, criação e leitura. A migração 008 substitui a unicidade conta/tipo pelo índice único conta/tipo/empréstimo (incluindo chaves nulas), mantendo uma notificação por decisão e permitindo vários empréstimos na mesma conta. As decisões idempotentes e os bloqueios impedem duplicação. Cancelamentos não geram notificações administrativas. A migração 006 não cria avisos retroativos.
 
 `NOTIFICATIONS` e `READ_NOTIFICATION` exigem perfil de cliente e filtram por titular autenticado no COBOL. A leitura usa paginação por ID (50 por página); marcar como lida preserva a primeira data, inclusive em pedidos repetidos ou concorrentes. O POST web tem CSRF; motivos são escapados no HTML. `UNREAD_NOTIFICATIONS` conta todas as não lidas do titular, sem o limite da página; `READ_ALL_NOTIFICATIONS` atualiza apenas as suas linhas ainda não lidas numa transação. A leitura em lote é idempotente e preserva as datas existentes.
 
-`GET /notifications/feed` devolve contador e fragmento HTML escapado. O JavaScript local consulta-o a cada 15 segundos com a aba visível, pausa em segundo plano e atualiza ao regressar; evita pedidos sobrepostos, limita pedidos a 10 segundos e espaça tentativas até 60 segundos em caso de falha. Ações de leitura usam POST com CSRF, sem repetição automática. A sessão expirada interrompe a atualização. A CSP permite apenas scripts da mesma origem, sem scripts inline ou handlers HTML. Sem JavaScript, os formulários mantêm o percurso normal de POST e redirecionamento.
+`GET /notifications/feed` devolve contador e fragmento HTML escapado; `?summary=1` devolve apenas o contador. `SESSION` inclui o total de não lidas, reutilizado durante esse pedido HTTP, sem cache entre pedidos. O JavaScript local consulta-o a cada 15 segundos com a aba visível, pausa em segundo plano e atualiza ao regressar; evita pedidos sobrepostos, limita pedidos a 10 segundos e espaça tentativas até 60 segundos em caso de falha. Ações de leitura usam POST com CSRF, sem repetição automática. A sessão expirada interrompe a atualização. A CSP permite apenas scripts da mesma origem, sem scripts inline ou handlers HTML. Sem JavaScript, os formulários mantêm o percurso normal de POST e redirecionamento.
 
 ### Operações diárias
 
@@ -165,3 +165,8 @@ Extratos mensais bloqueiam a conta enquanto leem totais e movimentos, garantindo
 Os limites aplicam-se exclusivamente a transferências de saída e usam a data do Db2. O agregado diário é lido com o bloqueio da conta de origem já adquirido. Alterações de política usam o mesmo bloqueio. Os planos de empréstimo usam campos decimais COBOL; capital regular truncado a cêntimos, remanescente na última prestação e juros arredondados a cêntimos a cada mês. Pagamentos antecipados mantêm os montantes contratados nesta simulação.
 
 Os índices únicos dos identificadores de desembolso e pagamento usam `EXCLUDE NULL KEYS`, permitindo pedidos e prestações ainda não processados, conforme a [documentação IBM de CREATE INDEX](https://www.ibm.com/docs/en/db2/11.5.x?topic=statements-create-index).
+
+
+A migração 008 elimina apenas as antigas restrições de unicidade/check de notificações, identificadas pelo catálogo Db2; mantém a chave primária e as referências existentes e adiciona a referência ao empréstimo e os novos checks. A gravação do aviso ocorre depois da decisão/auditoria, ainda na mesma transação COBOL: uma falha no aviso reverte também o crédito.
+
+Os recursos estáticos recebem uma versão SHA-256 abreviada no URL e cache público imutável apenas quando a versão coincide com o ficheiro servido. URLs sem versão ou desatualizados exigem revalidação. Todo o conteúdo privado continua sem cache. O cabeçalho `Server-Timing: app;dur=...` permite observar a duração do pedido sem registar valores ou credenciais. O polling reutiliza os valores iniciais do HTML e começa após 15 segundos, sem uma consulta extra ao abrir cada página.
